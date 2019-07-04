@@ -165,7 +165,8 @@ class Sentinel(object):
         return super(Sentinel, cls).__new__(cls)
 
 
-def _sentinel_unpickler(name, obj_id=None):  # obj_id is for compat. with prev. versions
+# obj_id is for compat. with prev. versions
+def _sentinel_unpickler(name, obj_id=None):
     if name in Sentinel._existing_instances:
         return Sentinel._existing_instances[name]
     return Sentinel(name)
@@ -230,7 +231,8 @@ class Field(object):
         return "{}(name={!r}, value={!r})".format(self.__class__.__name__, self.name, self._value)
 
     def set_value(self, value):
-        raise DeriableSetValueError("Derivable.set_value() method should never bee called")
+        raise DeriableSetValueError(
+            "Derivable.set_value() method should never bee called")
 
     def get_value(self, check_dont_dump=False, check_printable=False):
         """
@@ -465,7 +467,8 @@ class BaseConfigClass(object):
         dct = OrderedDict()
         for attr, value in self._declared_fields.items():
             try:
-                dct[attr] = value.get_value(check_dont_dump=check_dont_dump, check_printable=check_printable)
+                dct[attr] = value.get_value(
+                    check_dont_dump=check_dont_dump, check_printable=check_printable)
             except DontDumpError:
                 pass
             except Exception as e:
@@ -474,7 +477,8 @@ class BaseConfigClass(object):
 
     def to_json(self, check_dont_dump=True, check_printable=False):
         return json.dumps(
-            self.to_dict(check_dont_dump=check_dont_dump, check_printable=check_printable),
+            self.to_dict(check_dont_dump=check_dont_dump,
+                         check_printable=check_printable),
             indent=4, sort_keys=False,
         )
 
@@ -495,9 +499,11 @@ class BaseConfigClass(object):
 
     def _join_config_dir(self, filename):
         if self.CONFIG_DIR is NOTHING:
-            raise ValueError("You have to specify `{}.CONFIG_DIR`!".format(self.__class__.__name__))
+            raise ValueError("You have to specify `{}.CONFIG_DIR`!".format(
+                self.__class__.__name__))
         if not os.path.exists(self.CONFIG_DIR):
-            raise ValueError("`{}.CONFIG_DIR` ('{}') doesn't exist!".format(self.__class__.__name__, self.CONFIG_DIR))
+            raise ValueError("`{}.CONFIG_DIR` ('{}') doesn't exist!".format(
+                self.__class__.__name__, self.CONFIG_DIR))
         return os.path.join(self.CONFIG_DIR, filename)
 
     @property
@@ -539,8 +545,8 @@ class BaseConfigClass(object):
         def to_big_camel_case(text):
             return "".join([
                 word[0].upper() + word[1:].lower()
-                for word in text.split("_") \
-                ])
+                for word in text.split("_")
+            ])
 
         return {
             to_big_camel_case(key): value

@@ -39,7 +39,8 @@ class Config2(Config1):
     @GITHUB_PASSWORD.validator
     def check_github_password(self, value):
         if len(value) < 16:
-            raise ValueError("GITHUB_PASSWORD has to be more than 16 characters!")
+            raise ValueError(
+                "GITHUB_PASSWORD has to be more than 16 characters!")
 
     LAPTOP_PASSWORD = Constant(dont_dump=True, printable=False)
 
@@ -77,7 +78,8 @@ class TestConfigClass(object):
         assert config.PROJECT_NAME_SLUG.get_value() == "my-project"
         assert config.ENVIRONMENT_NAME.get_value() == "my-project-dev"
         assert config.LAPTOP_PASSWORD.get_value() == "adminpassword"
-        assert config.RUNTIME_NAME.get_value() in ["circleci", "lambda", "local"]
+        assert config.RUNTIME_NAME.get_value(
+        ) in ["circleci", "lambda", "local"]
 
     def test_repr_and_printable_option(self):
         assert "mypassword" not in config.__repr__()
@@ -95,7 +97,8 @@ class TestConfigClass(object):
         try:
             config.validate()
         except Exception as e:
-            assert "GITHUB_PASSWORD has to be more than 16 characters!" in str(e)
+            assert "GITHUB_PASSWORD has to be more than 16 characters!" in str(
+                e)
 
     def test_work_with_config_files(self):
         config1 = Config()
