@@ -111,17 +111,28 @@ Quick Start
 
 .. code-block:: python
 
-    from configirl import ConfigClass, Constant, Deriable
+    from configirl import ConfigClass, Constant, Derivable
 
     class Config(object):
         CONFIG_DIR = "your-devops-workspace-dir"
 
         PROJECT_NAME = Constant()
-        PROJECT_NAME_SLUG = Deriable()
+        PROJECT_NAME_SLUG = Derivable()
 
-        @PROJECT_NAME_SLUG
+        @PROJECT_NAME_SLUG.getter
         def get_project_name_slug(self):
             return self.PROJECT_NAME.get_value().replace("_", "-")
+
+        STAGE = Constant()
+
+        ENVIRONMENT_NAME = Derivable()
+
+        @PROJECT_NAME_SLUG.getter
+        def get_environment_name(self):
+            return "{}-{}".format(
+                self.PROJECT_NAME_SLUG.get_value(),
+                self.STAGE.get_value(),
+            )
 
     config = Config()
     config.update_from_raw_json_file()
@@ -131,6 +142,26 @@ Quick Start
     # depends on what other devops tools you are using
 
 4. Everytime you call ``python config.py`` then the ground truth config value in ``config-raw.json`` will be parsed. and two more ``config-final-for-shell-script.json``, ``config-final-for-cloudformation.json`` will be create. Then you can just reference value from thos ``xxx-final-xxx.json`` file.
+
+.. code-block:: javascript
+
+    // content of config-final-for-shell-script.json
+    {
+        "PROJECT_NAME": "my_project",
+        "PROJECT_NAME_SLUG": "my-project",
+        "STAGE": "dev",
+        "ENVIRONMENT_NAME": "my-project-dev"
+    }
+
+.. code-block:: javascript
+
+    // content of config-final-for-cloudformation.json
+    {
+        "ProjectName": "my_project",
+        "ProjectNameSlug": "my-project",
+        "Stage": "dev",
+        "EnvironmentName": "my-project-dev"
+    }
 
 
 .. _install:

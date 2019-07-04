@@ -188,9 +188,9 @@ class ValueNotSetError(Exception):
     pass
 
 
-class DeriableSetValueError(Exception):
+class DerivableSetValueError(Exception):
     """
-    Raises when trying to set value for Deriable Field.
+    Raises when trying to set value for Derivable Field.
     """
     pass
 
@@ -231,7 +231,7 @@ class Field(object):
         return "{}(name={!r}, value={!r})".format(self.__class__.__name__, self.name, self._value)
 
     def set_value(self, value):
-        raise DeriableSetValueError(
+        raise DerivableSetValueError(
             "Derivable.set_value() method should never bee called")
 
     def get_value(self, check_dont_dump=False, check_printable=False):

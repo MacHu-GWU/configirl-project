@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import pytest
-from pytest import raises, approx
+from pytest import raises
 from os import environ, path
-from os.path import join, abspath, dirname, basename
 from configirl import (
     ConfigClass, Constant, Derivable,
-    DontDumpError, DeriableSetValueError,
 )
 
 
@@ -88,10 +86,6 @@ class TestConfigClass(object):
         data = config.to_dict()
         assert "GITHUB_PASSWORD" in data
         assert "LAPTOP_PASSWORD" not in data
-
-    def test_deriable_set_value_error(self):
-        with raises(DeriableSetValueError):
-            config.ENVIRONMENT_NAME.set_value("env name")
 
     def test_validate(self):
         try:

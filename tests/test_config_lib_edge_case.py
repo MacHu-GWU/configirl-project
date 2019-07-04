@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import pytest
-from pytest import raises, approx
-from os import environ, path
-from os.path import join, abspath, dirname, basename
+from pytest import raises
 from configirl import (
     ConfigClass, Constant, Derivable,
-    DontDumpError, ValueNotSetError, DeriableSetValueError,
+    ValueNotSetError, DerivableSetValueError,
 )
 
 
@@ -64,6 +62,10 @@ def test_derivable_field_get_value_with_no_default():
         PROJECT_NAME_SLUG = Derivable()
 
     config = Config(PROJECT_NAME="my_project")
+
+    with raises(DerivableSetValueError):
+        config.PROJECT_NAME_SLUG.set_value("my-project")
+
     with raises(ValueNotSetError):
         config.PROJECT_NAME_SLUG.get_value()
 
