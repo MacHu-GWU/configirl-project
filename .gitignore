@@ -3,6 +3,12 @@ configirl_venv/
 configirl.egg-info/
 configirl-*/
 
+config-final-for-python.json
+config-final-for-shell-script.json
+config-final-for-cloudformation.json
+config-final-for-sam.json
+config-final-for-serverless.json
+config-final-for-terraform.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
