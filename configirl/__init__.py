@@ -38,7 +38,7 @@ This library implemented in pure Python with no dependencies.
 
 from __future__ import print_function
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 __short_description__ = "Package short description."
 __license__ = "MIT"
 __author__ = "Sanhe Hu"

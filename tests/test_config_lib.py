@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import pytest
-from pytest import raises
 from os import environ, path
 from configirl import (
     ConfigClass, Constant, Derivable,
@@ -21,6 +20,11 @@ class Config2(Config1):
     @PROJECT_NAME_SLUG.getter
     def get_project_name_slug(self):
         return self.PROJECT_NAME.get_value().replace("_", "-")
+
+    @PROJECT_NAME_SLUG.validator
+    def check_project_name_slug(self, value):
+        if "_" in value:
+            raise ValueError("you can't use `_` in slugifie name!")
 
     ENVIRONMENT_NAME = Derivable()
 

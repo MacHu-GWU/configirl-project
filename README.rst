@@ -69,7 +69,7 @@ What is ``configirl``
         PROJECT_NAME = Constant()
         PROJECT_NAME_SLUG = Deriable()
 
-        @PROJECT_NAME_SLUG
+        @PROJECT_NAME_SLUG.getter
         def get_project_name_slug(self):
             return self.PROJECT_NAME.get_value().replace("_", "-")
 
@@ -123,6 +123,11 @@ Quick Start
         def get_project_name_slug(self):
             return self.PROJECT_NAME.get_value().replace("_", "-")
 
+        @PROJECT_NAME_SLUG.validator
+        def check_project_name_slug(self, value):
+            if "_" in value:
+                raise ValueError("you can't use `_` in slugifie name!")
+
         STAGE = Constant()
 
         ENVIRONMENT_NAME = Derivable()
@@ -162,6 +167,56 @@ Quick Start
         "Stage": "dev",
         "EnvironmentName": "my-project-dev"
     }
+
+
+Additional Feature
+------------------------------------------------------------------------------
+
+1. you can custom your validator.
+
+.. code-block:: python
+
+    from configirl import ConfigClass, Constant, Derivable
+
+    class Config(object):
+        PROJECT_NAME = Constant()
+        PROJECT_NAME_SLUG = Derivable()
+
+        @PROJECT_NAME_SLUG.getter
+        def get_project_name_slug(self):
+            return self.PROJECT_NAME.get_value().replace("_", "-")
+
+        @PROJECT_NAME_SLUG.validator
+        def check_project_name_slug(self, value):
+            if "_" in value:
+                raise ValueError("you can't use `_` in slugifie name!")
+
+2. you can inherit your Config Class.
+
+.. code-block:: python
+
+    from configirl import ConfigClass, Constant, Derivable
+
+    class Config1(object):
+        PROJECT_NAME = Constant()
+
+    class Config2(Config1):
+        PROJECT_NAME_SLUG = Derivable()
+
+        @PROJECT_NAME_SLUG.getter
+        def get_project_name_slug(self):
+            return self.PROJECT_NAME.get_value().replace("_", "-")
+
+        @PROJECT_NAME_SLUG.validator
+        def check_project_name_slug(self, value):
+            if "_" in value:
+                raise ValueError("you can't use `_` in slugifie name!")
+
+    class Config(Config2):
+        CONFIG_DIR = "your-devops-workspace-dir"
+
+    config = Config()
+    ... do what every you need
 
 
 .. _install:
