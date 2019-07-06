@@ -38,7 +38,7 @@ This library implemented in pure Python with no dependencies.
 
 from __future__ import print_function
 
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 __short_description__ = "Package short description."
 __license__ = "MIT"
 __author__ = "Sanhe Hu"
@@ -109,8 +109,12 @@ def write_text(text, abspath, encoding="utf-8"):
         return f.write(text.encode(encoding))
 
 
+def json_loads(text):
+    return json.loads(strip_comments(text))
+
+
 def json_dumps(data):
-    return json.dumps(data, indent=4, sort_keys=True, ensure_ascii=False)
+    return json.dumps(data, indent=4, sort_keys=False, ensure_ascii=False)
 
 
 def add_metaclass(metaclass):
@@ -416,6 +420,11 @@ class BaseConfigClass(object):
             field._config_object = self
 
     def __pre_hook_init__(self):
+        """
+        All declared fields is a mutable :class:`Field` Instance, defined
+        in Class level. So when you creating a new instance, the class
+        level fields have to be deep copied to the config instance.
+        """
         self._declared_fields = OrderedDict([
             (attr, copy.deepcopy(field))
             for attr, field in self._declared_fields.items()
@@ -455,11 +464,21 @@ class BaseConfigClass(object):
         return cls.from_dict(json.loads(strip_comments(json_str)))
 
     def update(self, dct):
+        """
+        Update constance config values from dictionary.
+
+        :type dct: dict
+
+        :rtype: None
+        """
         for key, value in dct.items():
             if key in self._constant_fields:
                 self._constant_fields[key].set_value(value)
 
     def update_from_raw_json_file(self):
+        """
+        Update constance config values from the :attr:`BaseConfigClass.CONFIG_RAW_JSON_FILE`.
+        """
         dct = json.loads(strip_comments(read_text(self.CONFIG_RAW_JSON_FILE)))
         self.update(dct)
 
@@ -548,10 +567,10 @@ class BaseConfigClass(object):
                 for word in text.split("_")
             ])
 
-        return {
-            to_big_camel_case(key): value
+        return OrderedDict([
+            (to_big_camel_case(key), value)
             for key, value in self.to_dict().items()
-        }
+        ])
 
     def to_sam_config_data(self):
         return self.to_dict()
