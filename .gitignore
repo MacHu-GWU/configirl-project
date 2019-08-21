@@ -3,6 +3,7 @@ configirl_venv/
 configirl.egg-info/
 configirl-*/
 
+config-raw.json
 config-final-for-python.json
 config-final-for-shell-script.json
 config-final-for-cloudformation.json

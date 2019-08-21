@@ -18,6 +18,12 @@ def test_get_value_method_been_called_without_class_object():
 
 
 def test_deep_copy_field_instance_when_init_class_object():
+    """
+    Test if Field attribute in the instance Config are actual different entities.
+
+    Because Field defines in Class level and the Field is a mutable object,
+    we have to do deep copy when you initiate the config object.
+    """
     class Config(ConfigClass):
         PROJECT_NAME = Constant(default="my_project")
 
@@ -29,17 +35,9 @@ def test_deep_copy_field_instance_when_init_class_object():
         id(Config.from_dict(dict(PROJECT_NAME="my_project"))),
         id(Config.from_dict(dict(PROJECT_NAME="my_project"))),
     ]
+
+    # entity id are different
     assert len(set(field_id_list)) == len(field_id_list)
-
-
-class TestValueNotSetError():
-    def test(self):
-        class Config(ConfigClass):
-            PROJECT_NAME = Constant()
-
-        config = Config()
-        with raises(ValueNotSetError):
-            config.PROJECT_NAME.get_value()
 
 
 def test_config_dir():

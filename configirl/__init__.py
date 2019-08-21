@@ -38,8 +38,8 @@ This library implemented in pure Python with no dependencies.
 
 from __future__ import print_function
 
-__version__ = "0.0.3"
-__short_description__ = "Package short description."
+__version__ = "0.0.4"
+__short_description__ = "Centralized Config Management Tool."
 __license__ = "MIT"
 __author__ = "Sanhe Hu"
 __author_email__ = "husanhe@gmail.com"
@@ -117,7 +117,7 @@ def json_dumps(data):
     return json.dumps(data, indent=4, sort_keys=False, ensure_ascii=False)
 
 
-def add_metaclass(metaclass):
+def add_metaclass(metaclass):  # pragma: no cover
     """
     Class decorator for creating a class with a metaclass.
 
@@ -148,7 +148,7 @@ except ImportError:  # pragma: no cover
     import copy_reg as copyreg
 
 
-class Sentinel(object):
+class Sentinel(object):  # pragma: no cover
     _existing_instances = {}
 
     def __init__(self, name):
@@ -183,6 +183,8 @@ def _sentinel_pickler(sentinel):
 copyreg.pickle(Sentinel, _sentinel_pickler, _sentinel_unpickler)
 
 NOTHING = Sentinel("NOTHING")
+REQUIRED = Sentinel("REQUIRED")
+OPTIONAL = Sentinel("OPTIONAL")
 
 
 class ValueNotSetError(Exception):
@@ -262,10 +264,10 @@ class Field(object):
         """
         if self._config_object is NOTHING:
             raise AttributeError("Field.get_value() can't be called without "
-                                 "initialized with ")
+                                 "initialized.")
         if check_dont_dump:
             if self.dont_dump:
-                raise DontDumpError
+                raise DontDumpError("doesn't allow to dump `{}` field".format(self.name))
         if check_printable:
             if not self.printable:
                 return "***HIDDEN***"
@@ -274,13 +276,25 @@ class Field(object):
             if self._value is NOTHING:
                 raise ValueNotSetError(
                     "{}.{} has not set a value yet!".format(
-                        self.__class__.__name__, self.name
+                        self._config_object.__class__.__name__, self.name
                     )
                 )
             else:
                 return self._value
         else:
-            return self._getter_method(self._config_object)
+            try:
+                return self._getter_method(self._config_object)
+            except ValueNotSetError as e:
+                raise ValueNotSetError(
+                    "can't get {}.{}, because: {}".format(
+                        self._config_object.__class__.__name__, self.name, e
+                    )
+                )
+            except Exception as e:
+                raise e
+
+    def get_value_from_env(self, prefix=""):
+        return os.environ[prefix + self.name]
 
     def _validate_method(self, config_object, value):
         return True
@@ -312,7 +326,7 @@ class DontDumpError(Exception):
 
 class Constant(Field):
     """
-    Constant Value.
+    Constant Value Field.
     """
 
     def set_value(self, value):
@@ -321,7 +335,7 @@ class Constant(Field):
 
 class Derivable(Field):
     """
-    Derivable Value.
+    Derivable Value Field.
     """
 
     def getter(self, method):
@@ -413,13 +427,13 @@ class BaseConfigClass(object):
 
     # --- constructor method
     def __init__(self, **kwargs):
-        self.__pre_hook_init__()
+        self.__pre_init_hook()
         for name, field in self._declared_fields.items():
             if name in kwargs:
                 field.set_value(kwargs[name])
             field._config_object = self
 
-    def __pre_hook_init__(self):
+    def __pre_init_hook(self):
         """
         All declared fields is a mutable :class:`Field` Instance, defined
         in Class level. So when you creating a new instance, the class
@@ -482,22 +496,66 @@ class BaseConfigClass(object):
         dct = json.loads(strip_comments(read_text(self.CONFIG_RAW_JSON_FILE)))
         self.update(dct)
 
-    def to_dict(self, check_dont_dump=True, check_printable=False):
+    def to_dict(self,
+                check_dont_dump=True,
+                check_printable=False,
+                ignore_na=False,
+                prefix=""):
+        """
+        Dump config values to dictionary.
+
+        :type check_dont_dump: bool
+        :param check_dont_dump: if True, then it will check if a field has
+            a True value ``dont_dump`` flag, then :class:`DontDumpError` error
+            is raised.
+
+        :type check_printable: bool
+        :param check_printable: if True, then it will check if a field has
+            a False value ``printable`` flag, then it returns **HIDDEN**.
+
+        :type ignore_na: bool
+        :param ignore_na: if True, then :class:`ValueNotSetError` error will be
+            ignored.
+
+        :type prefix: str
+        :param prefix: a prefix that appended to the left of every field
+
+        :rtype: dict
+        """
         dct = OrderedDict()
         for attr, value in self._declared_fields.items():
+            key = prefix + attr
             try:
-                dct[attr] = value.get_value(
-                    check_dont_dump=check_dont_dump, check_printable=check_printable)
+                dct[key] = value.get_value(
+                    check_dont_dump=check_dont_dump,
+                    check_printable=check_printable,
+                )
             except DontDumpError:
                 pass
+            except ValueNotSetError as e:
+                if ignore_na:
+                    pass
+                else:
+                    raise e
             except Exception as e:
                 raise e
         return dct
 
-    def to_json(self, check_dont_dump=True, check_printable=False):
+    def to_json(self,
+                check_dont_dump=True,
+                check_printable=False,
+                ignore_na=False,
+                prefix=""):
+        """
+        Dump config values to json.
+        """
         return json.dumps(
-            self.to_dict(check_dont_dump=check_dont_dump,
-                         check_printable=check_printable),
+            self.to_dict(
+                check_dont_dump=check_dont_dump,
+                check_printable=check_printable,
+                ignore_na=ignore_na,
+                prefix=prefix,
+            ),
             indent=4, sort_keys=False,
         )
 
@@ -512,6 +570,85 @@ class BaseConfigClass(object):
     def validate(self):
         for field in self._declared_fields.values():
             field.validate()
+
+    # --- Runtime Detection ---
+    @classmethod
+    def is_aws_ec2_runtime(cls):  # pragma: no cover
+        if os.environ["HOME"].endswith("ec2-user"):
+            return True
+        else:
+            return False
+
+    @classmethod
+    def is_aws_lambda_runtime(cls):  # pragma: no cover
+        """
+        Ref: https://docs.aws.amazon.com/lambda/latest/dg/lambda-environment-variables.html
+        """
+        if "AWS_LAMBDA_FUNCTION_NAME" in os.environ:
+            return True
+        else:
+            return False
+
+    @classmethod
+    def is_aws_code_build_runtime(cls):  # pragma: no cover
+        """
+        Ref: https://docs.aws.amazon.com/codebuild/latest/userguide/build-env-ref-env-vars.html
+        """
+        if "CODEBUILD_BUILD_ID" in os.environ:
+            return True
+        else:
+            return False
+
+    # CI
+    @classmethod
+    def is_ci_runtime(cls):  # pragma: no cover
+        if "CI" in os.environ:
+            if os.environ["CI"] is True:
+                return True
+            else:
+                return False
+        else:
+            return False
+
+    @classmethod
+    def is_circle_ci_runtime(cls):  # pragma: no cover
+        """
+        Ref: https://circleci.com/docs/2.0/env-vars/#built-in-environment-variables
+        :return:
+        """
+        if "CIRCLECI" in os.environ:
+            if os.environ["CIRCLECI"] is True:
+                return True
+            else:
+                return False
+        else:
+            return False
+
+    @classmethod
+    def is_travis_ci_runtime(cls):  # pragma: no cover
+        """
+        Ref: https://docs.travis-ci.com/user/environment-variables/#default-environment-variables
+        """
+        if "TRAVIS" in os.environ:
+            if os.environ["TRAVIS"] is True:
+                return True
+            else:
+                return False
+        else:
+            return False
+
+    @classmethod
+    def is_gitlab_ci_runtime(cls):  # pragma: no cover
+        """
+        Ref: https://docs.gitlab.com/ee/ci/variables/
+        """
+        if "GITLAB_CI" in os.environ:
+            if os.environ["GITLAB_CI"]:
+                return True
+            else:
+                return False
+        else:
+            return False
 
     # --- config file path management
     CONFIG_DIR = NOTHING  # type: str

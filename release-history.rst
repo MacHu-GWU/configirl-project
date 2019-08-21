@@ -4,11 +4,29 @@ Release and Version History
 ==============================================================================
 
 
-0.0.4 (TODO)
+0.0.5 (TODO)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Features and Improvements**
 
 **Minor Improvements**
+
+**Bugfixes**
+
+**Miscellaneous**
+
+
+0.0.4 (2019-08-21)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**Features and Improvements**
+
+- add ``ignore_na`` arg for ``Config.to_dict()`` method.
+- add ``prefix`` arg for ``Config.to_dict()`` method.
+- enrich error information when encounter ``ValueNotSetError``.
+- add lots of detect runtime class method.
+
+**Minor Improvements**
+
+- add use case document.
 
 **Bugfixes**
 
