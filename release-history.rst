@@ -4,9 +4,22 @@ Release and Version History
 ==============================================================================
 
 
+0.0.6 (TODO)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**Features and Improvements**
+
+**Minor Improvements**
+
+**Bugfixes**
+
+**Miscellaneous**
+
+
 0.0.5 (TODO)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Features and Improvements**
+
+- add ``Config.update_from_env_var(prefix)`` method
 
 **Minor Improvements**
 
@@ -23,6 +36,7 @@ Release and Version History
 - add ``prefix`` arg for ``Config.to_dict()`` method.
 - enrich error information when encounter ``ValueNotSetError``.
 - add lots of detect runtime class method.
+- add ``Field.get_value_from_env(prefix)`` method to allow you to get value from environment variables.
 
 **Minor Improvements**
 

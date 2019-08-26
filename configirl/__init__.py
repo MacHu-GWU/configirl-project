@@ -38,7 +38,7 @@ This library implemented in pure Python with no dependencies.
 
 from __future__ import print_function
 
-__version__ = "0.0.4"
+__version__ = "0.0.5"
 __short_description__ = "Centralized Config Management Tool."
 __license__ = "MIT"
 __author__ = "Sanhe Hu"
@@ -491,9 +491,23 @@ class BaseConfigClass(object):
 
     def update_from_raw_json_file(self):
         """
-        Update constance config values from the :attr:`BaseConfigClass.CONFIG_RAW_JSON_FILE`.
+        Update constant config values from the :attr:`BaseConfigClass.CONFIG_RAW_JSON_FILE`.
         """
         dct = json.loads(strip_comments(read_text(self.CONFIG_RAW_JSON_FILE)))
+        self.update(dct)
+
+    def update_from_env_var(self, prefix):
+        """
+        Update constant config values from environment variables.
+
+        :type prefix: str
+        :param prefix: a prefix used in all related environment variable.
+        """
+        dct = {
+            key.replace(prefix, "", 1): value
+            for key, value in os.environ.items()
+            if key.replace(prefix, "", 1)
+        }
         self.update(dct)
 
     def to_dict(self,

@@ -18,6 +18,7 @@ class Config(ConfigClass):
     PROJECT_NAME = Constant()
     STAGE = Constant()
 
+    # specify dont_dump to avoid dump to dict or json
     PARAM_ENV_NAME = Derivable(dont_dump=True)
 
     @PARAM_ENV_NAME.getter
@@ -33,6 +34,18 @@ class TestConfig(object):
         conf = Config(non_related_var=None)
         with pytest.raises(ValueNotSetError):
             conf.to_dict()
+
+    def test_dont_dump_with_json_incompatible_value(self):
+        conf = Config(PROJECT_NAME="my_project", STAGE="dev")
+        conf.to_json() # PARAM_ENV_NAME doesn't cause any problem
+
+    def test_update_from_env_var(self):
+        environ["MY_APP_PROJECT_NAME"] = "my_project"
+        conf = Config(PROJECT_NAME="other_project")
+        conf.update_from_env_var(prefix="MY_APP_")
+        assert conf.PROJECT_NAME.get_value() == "my_project"
+        with pytest.raises(ValueNotSetError):
+            conf.STAGE.get_value()
 
 
 if __name__ == "__main__":
