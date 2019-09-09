@@ -38,7 +38,7 @@ This library implemented in pure Python with no dependencies.
 
 from __future__ import print_function
 
-__version__ = "0.0.5"
+__version__ = "0.0.6"
 __short_description__ = "Centralized Config Management Tool."
 __license__ = "MIT"
 __author__ = "Sanhe Hu"
@@ -294,7 +294,26 @@ class Field(object):
                 raise e
 
     def get_value_from_env(self, prefix=""):
+        """
+        Use config value stored in environment variables. This usually used
+        for computation server that doesn't come with the config file. Since
+        config file with sensitive information may not easy to manage. A common
+        use case is AWS Lambda Function.
+
+        :param prefix: a prefix append left to the config field name. For exmaple,
+            if the config field is ``PROJECT_NAME``, and the prefix is ``MY_PROJECT_``,
+            then it will read value from ``MY_PROJECT_PROJECT_NAME``.
+        """
         return os.environ[prefix + self.name]
+
+    def get_value_for_lbd(self, prefix=""):
+        """
+        Smartly decide where should read config value from.
+        """
+        if self._config_object.is_aws_lambda_runtime():
+            return self.get_value_from_env(prefix=prefix)
+        else:
+            return self.get_value()
 
     def _validate_method(self, config_object, value):
         return True

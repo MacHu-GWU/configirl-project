@@ -98,6 +98,12 @@ def test_get_value_from_env():
     assert conf.PROJECT_NAME.get_value_from_env(PREFIX) == "configirl"
 
 
+def test_get_value_for_lbd():
+    conf = Config(PROJECT_NAME="configirl")
+    PREFIX = "CONFIGIRL_"
+    assert conf.PROJECT_NAME.get_value_for_lbd(PREFIX) == "configirl"
+
+
 if __name__ == "__main__":
     import os
 
