@@ -38,7 +38,7 @@ This library implemented in pure Python with no dependencies.
 
 from __future__ import print_function
 
-__version__ = "0.0.6"
+__version__ = "0.0.7"
 __short_description__ = "Centralized Config Management Tool."
 __license__ = "MIT"
 __author__ = "Sanhe Hu"
@@ -636,7 +636,7 @@ class BaseConfigClass(object):
     @classmethod
     def is_ci_runtime(cls):  # pragma: no cover
         if "CI" in os.environ:
-            if os.environ["CI"] is True:
+            if os.environ["CI"]:
                 return True
             else:
                 return False
@@ -650,7 +650,7 @@ class BaseConfigClass(object):
         :return:
         """
         if "CIRCLECI" in os.environ:
-            if os.environ["CIRCLECI"] is True:
+            if os.environ["CIRCLECI"]:
                 return True
             else:
                 return False
@@ -663,7 +663,7 @@ class BaseConfigClass(object):
         Ref: https://docs.travis-ci.com/user/environment-variables/#default-environment-variables
         """
         if "TRAVIS" in os.environ:
-            if os.environ["TRAVIS"] is True:
+            if os.environ["TRAVIS"]:
                 return True
             else:
                 return False
