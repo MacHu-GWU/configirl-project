@@ -38,7 +38,7 @@ This library implemented in pure Python with no dependencies.
 
 from __future__ import print_function
 
-__version__ = "0.0.7"
+__version__ = "0.0.8"
 __short_description__ = "Centralized Config Management Tool."
 __license__ = "MIT"
 __author__ = "Sanhe Hu"
@@ -110,11 +110,30 @@ def write_text(text, abspath, encoding="utf-8"):
 
 
 def json_loads(text):
+    """
+    :rtype: dict
+    """
     return json.loads(strip_comments(text))
 
 
 def json_dumps(data):
+    """
+    :rtype: str
+    """
     return json.dumps(data, indent=4, sort_keys=False, ensure_ascii=False)
+
+
+def json_load(path):
+    with open(path, "rb") as f:
+        return json_loads(f.read().decode("utf-8"))
+
+
+def json_dump(data, path, overwrite=False):
+    if not overwrite:
+        if os.path.exists(path):
+            raise EnvironmentError("%s already exists!" % path)
+    with open(path, "wb") as f:
+        f.write(json_dumps(data).encode("utf-8"))
 
 
 def add_metaclass(metaclass):  # pragma: no cover
@@ -480,7 +499,7 @@ class BaseConfigClass(object):
         Only read constant config variables from json file.
 
         :type dct: dict
-        :rtype: BaseConfig
+        :rtype: BaseConfigClass
         """
         config = cls()
         for key, value in dct.items():
@@ -492,13 +511,16 @@ class BaseConfigClass(object):
     def from_json(cls, json_str):
         """
         :type json_str: str
-        :rtype: BaseConfig
+
+        :rtype: BaseConfigClass
         """
         return cls.from_dict(json.loads(strip_comments(json_str)))
 
     def update(self, dct):
         """
         Update constance config values from dictionary.
+        Only those fields defines as Constant value will be loaded.
+        Fields don't belong to this config definition will not be loaded.
 
         :type dct: dict
 
@@ -581,6 +603,24 @@ class BaseConfigClass(object):
                 prefix=""):
         """
         Dump config values to json.
+
+        :type check_dont_dump: bool
+        :param check_dont_dump: if True, then it will check if a field has
+            a True value ``dont_dump`` flag, then :class:`DontDumpError` error
+            is raised.
+
+        :type check_printable: bool
+        :param check_printable: if True, then it will check if a field has
+            a False value ``printable`` flag, then it returns **HIDDEN**.
+
+        :type ignore_na: bool
+        :param ignore_na: if True, then :class:`ValueNotSetError` error will be
+            ignored.
+
+        :type prefix: str
+        :param prefix: a prefix that appended to the left of every field
+
+        :rtype: str
         """
         return json.dumps(
             self.to_dict(
@@ -606,7 +646,21 @@ class BaseConfigClass(object):
 
     # --- Runtime Detection ---
     @classmethod
-    def is_aws_ec2_runtime(cls):  # pragma: no cover
+    def is_aws_ec2_amz_linux_runtime(cls):  # pragma: no cover
+        if os.environ["HOME"].endswith("ec2-user"):
+            return True
+        else:
+            return False
+
+    @classmethod
+    def is_aws_ec2_redhat_runtime(cls):  # pragma: no cover
+        if os.environ["HOME"].endswith("ec2-user"):
+            return True
+        else:
+            return False
+
+    @classmethod
+    def is_aws_ec2_freebsd_runtime(cls):  # pragma: no cover
         if os.environ["HOME"].endswith("ec2-user"):
             return True
         else:

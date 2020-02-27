@@ -170,7 +170,7 @@ Quick Start
     }
 
 
-Additional Feature
+Additional Features
 ------------------------------------------------------------------------------
 
 1. you can custom your validator.
@@ -227,7 +227,7 @@ In this example, we are designing the devops solution for a complex Web App, the
 
 Suppose your ``project name`` is ``MyWebApp``, and it has multiple deployment ``stage`` ``dev``, ``test``, ``prod``, in other word, it will be deployed to three ``Environment``. And the environment name ``MyWebApp-dev/test/prod`` will be used as a prefix name almost everywhere in your Java Code, Cloudformation Code, CICD Code. And you **DONT want to manage the config value** like ``PROJECT_NAME`` and ``STAGE`` everywhere in Java Code, Cloudformation Code, CICD Code.
 
-If you don't want to create the devops scripts manually in the following instruction, you can just copy the entire ``devops-example`` directory from https://github.com/MacHu-GWU/configirl-project/tree/master/devops-example to your local machine.
+**If you don't want to create the devops scripts manually in the following instruction, you can just copy the entire** ``devops-example`` directory from https://github.com/MacHu-GWU/configirl-project/tree/master/devops-example to your local machine.
 
 
 1. Centralize Your Config Definition
@@ -241,6 +241,10 @@ Create a ``config.py`` file next to ``configirl.py`` it is the centralized place
 
     # -*- coding: utf-8 -*-
     # content of config.py
+
+    """
+    defines the constant and derivable config value.
+    """
 
     import os
     from configirl import ConfigClass, Constant, Derivable
@@ -286,6 +290,75 @@ Create a config file ``./00-config-shared.json`` and put the following content `
 **For different deployment stages, they may share common config values, those information goes to** ``./00-config-shared.json`` file.
 
 **For environment dependent config values, they goes to different config files**.
+
+
+3. Write your Config initiation Scripts.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Where the config values been load from may varies in different environment.
+
+- On local development, the configs may sit on your local computer.
+- On CI/CD environment, the configs may comes from Git, and sensitive information may be stored in secure storage like AWS Secret Manager.
+- On EC2 App server, the configs may comes from Environment Variables.
+
+You can create a ``config_init.py`` scripts that tells computer to load config values from different place in different situations.
+
+.. code-block:: python
+
+    # -*- coding: utf-8 -*-
+    # content of config_init.py
+
+    """
+    initialize the config object, it reads common config value from the
+    ``00-config-shared.json`` file, and read environment specified value from the
+    ``config-raw.json`` file.
+
+    Suppose that:
+
+    - on local development, you load all values from your local file.
+    - on CI/CD environment, you load non-sensitive values from Git repo, load
+        sensitive values from AWS Secret Manager. Because you don't 100% trust your
+        CI/CD provider.
+    - on EC2 App server, you load non-sensitive values from Git repo, load
+        sensitive values from Environment Variable. Because the servers locates
+        at secure environment.
+    """
+
+    import os, json
+    from config import Config
+
+    conf = Config()
+
+    path_shared_config_file = os.path.join(os.path.dirname(__file__), "00-config-shared.json")
+    path_shared_secrets_config_file = os.path.join(os.path.dirname(__file__), "00-config-shared-secrets.json")
+
+
+    # load non sensitive values
+    conf.update(json.loads(open(path_shared_config_file, "rb").read().decode("utf-8")))
+
+    # load environment specified values
+    conf.update_from_raw_json_file() # load environment specific values
+
+    # load sensitive values
+    if conf.is_aws_ec2_runtime():
+        conf.update_from_env_var(prefix="APP_CONFIG_")
+    elif conf.is_ci_runtime():
+        def read_sensitive_value_from_aws_secret_manager():
+            return dict()
+        conf.update(read_sensitive_value_from_aws_secret_manager())
+    else:
+        conf.update(json.loads(open(path_shared_secrets_config_file, "rb").read().decode("utf-8")))
+
+    # dump other derivable values for other system to use
+    if conf.is_ci_runtime(): # allow other system like terraform to use those value for deployment
+        conf.dump_shell_script_json_config_file()
+        conf.dump_terraform_json_config_file()
+
+
+Other Godies
+------------------------------------------------------------------------------
+
+- `pysecret <https://github.com/MacHu-GWU/pysecret-project>`_ Allows to easily and securely load from and write to file, environment variable, aws secret manager.
 
 
 .. _install:

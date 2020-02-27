@@ -2,7 +2,7 @@
 # content of config.py
 
 """
-defines the constant and derivable config value
+defines the constant and derivable config value.
 """
 
 import os
@@ -10,7 +10,7 @@ from configirl import ConfigClass, Constant, Derivable
 
 
 class Config(ConfigClass):
-    CONFIG_DIR = os.path.dirname(__file__)
+    CONFIG_DIR = os.path.dirname(__file__) # config stores at the ``devops-example`` directory
 
     PROJECT_NAME = Constant()  # example "MyWebApp"
     PROJECT_NAME_SLUG = Derivable()
@@ -42,3 +42,5 @@ class Config(ConfigClass):
             self.PROJECT_NAME.get_value().lower(),
             self.STAGE.get_value(),
         )
+
+    GITHUB_ACCESS_TOKEN = Constant(dont_dump=True, printable=False) # sensitive config value

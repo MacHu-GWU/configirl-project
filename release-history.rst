@@ -4,7 +4,7 @@ Release and Version History
 ==============================================================================
 
 
-0.0.8 (TODO)
+0.0.9 (TODO)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Features and Improvements**
 
@@ -13,6 +13,22 @@ Release and Version History
 **Bugfixes**
 
 **Miscellaneous**
+
+
+0.0.8 (2020-02-27)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Minor Improvements**
+
+- remove ``.is_aws_ec2_runtime()`` method, add ``is_aws_ec2_amz_linux_runtime``, ``is_aws_ec2_redhat_runtime``, ``is_aws_ec2_freebsd_runtime`` methods.
+
+**Bugfixes**
+
+- fix type hint
+
+**Miscellaneous**
+
+- update The devops best practice example
 
 
 0.0.7 (2019-12-26)
