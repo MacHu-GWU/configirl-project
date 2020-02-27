@@ -11,7 +11,7 @@ class Config(ConfigClass):
 
 
 def test_detect_environment():
-    Config.is_aws_ec2_runtime()
+    Config.is_aws_ec2_amz_linux_runtime()
     Config.is_aws_lambda_runtime()
     Config.is_aws_code_build_runtime()
     Config.is_ci_runtime()
