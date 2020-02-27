@@ -123,12 +123,12 @@ def json_dumps(data):
     return json.dumps(data, indent=4, sort_keys=False, ensure_ascii=False)
 
 
-def json_load(path):
+def json_load(path): # pragma: no cover
     with open(path, "rb") as f:
         return json_loads(f.read().decode("utf-8"))
 
 
-def json_dump(data, path, overwrite=False):
+def json_dump(data, path, overwrite=False): # pragma: no cover
     if not overwrite:
         if os.path.exists(path):
             raise EnvironmentError("%s already exists!" % path)
