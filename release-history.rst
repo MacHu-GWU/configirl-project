@@ -4,7 +4,7 @@ Release and Version History
 ==============================================================================
 
 
-0.0.9 (TODO)
+0.0.10 (TODO)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Features and Improvements**
 
@@ -14,6 +14,20 @@ Release and Version History
 
 **Miscellaneous**
 
+
+0.0.9 (2020-03-04)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**Features and Improvements**
+
+- add ``Derivable(..., cache=True)`` option to allow cache derived value
+
+**Minor Improvements**
+
+**Bugfixes**
+
+**Miscellaneous**
+
+- refactor ``Field.get_value`` method.
 
 0.0.8 (2020-02-27)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

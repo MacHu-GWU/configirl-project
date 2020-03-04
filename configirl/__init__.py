@@ -38,7 +38,7 @@ This library implemented in pure Python with no dependencies.
 
 from __future__ import print_function
 
-__version__ = "0.0.8"
+__version__ = "0.0.9"
 __short_description__ = "Centralized Config Management Tool."
 __license__ = "MIT"
 __author__ = "Sanhe Hu"
@@ -123,12 +123,12 @@ def json_dumps(data):
     return json.dumps(data, indent=4, sort_keys=False, ensure_ascii=False)
 
 
-def json_load(path): # pragma: no cover
+def json_load(path):  # pragma: no cover
     with open(path, "rb") as f:
         return json_loads(f.read().decode("utf-8"))
 
 
-def json_dump(data, path, overwrite=False): # pragma: no cover
+def json_dump(data, path, overwrite=False):  # pragma: no cover
     if not overwrite:
         if os.path.exists(path):
             raise EnvironmentError("%s already exists!" % path)
@@ -232,19 +232,23 @@ class Field(object):
 
     :type printable: bool
     :param printable: if False, then it will not be displayed with
-        :meth:`BaseConfigClass.pprint`
+
+    :type cache: bool
+    :param cache: only available for :class:`Derivable` if True,
+        then it will cache derived value.
     """
     _creation_index = 0
 
     def __init__(self,
                  default=NOTHING,
                  dont_dump=False,
-                 printable=True):
+                 printable=True,
+                 cache=False):
         self.name = None
         self._value = default
-
         self.dont_dump = dont_dump  # type: bool
         self.printable = printable  # type: bool
+        self.cache = cache  # type: bool
 
         self._config_object = NOTHING  # type: BaseConfigClass
         self._creation_index = Field._creation_index  # type: int
@@ -259,7 +263,16 @@ class Field(object):
         raise DerivableSetValueError(
             "Derivable.set_value() method should never bee called")
 
-    def get_value(self, check_dont_dump=False, check_printable=False):
+    def _get_value(self, **kwargs):
+        """
+        Config Value Type specified.
+        """
+        raise NotImplementedError
+
+    def get_value(self,
+                  check_dont_dump=False,
+                  check_printable=False,
+                  **kwargs):
         """
         Since the derivable
 
@@ -279,7 +292,6 @@ class Field(object):
         对于 Derivable Field:
 
         - 如果: self._getter_method() 没有成功
-
         """
         if self._config_object is NOTHING:
             raise AttributeError("Field.get_value() can't be called without "
@@ -291,26 +303,7 @@ class Field(object):
             if not self.printable:
                 return "***HIDDEN***"
 
-        if self._getter_method is NOTHING:
-            if self._value is NOTHING:
-                raise ValueNotSetError(
-                    "{}.{} has not set a value yet!".format(
-                        self._config_object.__class__.__name__, self.name
-                    )
-                )
-            else:
-                return self._value
-        else:
-            try:
-                return self._getter_method(self._config_object)
-            except ValueNotSetError as e:
-                raise ValueNotSetError(
-                    "can't get {}.{}, because: {}".format(
-                        self._config_object.__class__.__name__, self.name, e
-                    )
-                )
-            except Exception as e:
-                raise e
+        return self._get_value(**kwargs)
 
     def get_value_from_env(self, prefix=""):
         """
@@ -370,6 +363,15 @@ class Constant(Field):
     def set_value(self, value):
         self._value = value
 
+    def _get_value(self, **kwargs):
+        if self._value is NOTHING:
+            raise ValueNotSetError(
+                "{}.{} has not set a value yet!".format(
+                    self._config_object.__class__.__name__, self.name
+                )
+            )
+        return self._value
+
 
 class Derivable(Field):
     """
@@ -378,6 +380,30 @@ class Derivable(Field):
 
     def getter(self, method):
         self._getter_method = method
+
+    def _get_value(self, **kwargs):
+        if self._getter_method is NOTHING:
+            raise NotImplementedError(
+                "{}.{} getter method is not implemented, "
+                "use @{}.getter to decorate a getter function.".format(
+                    self._config_object.__class__.__name__, self.name, self.name
+                ))
+
+        try:
+            if self.cache:
+                if self._value is NOTHING:
+                    self._value = self._getter_method(self._config_object, **kwargs)
+                return self._value
+            else:
+                return self._getter_method(self._config_object, **kwargs)
+        except ValueNotSetError as e:  # dependent constant value not set yet
+            raise ValueNotSetError(
+                "can't get {}.{}, because: {}".format(
+                    self._config_object.__class__.__name__, self.name, e
+                )
+            )
+        except Exception as e:
+            raise e
 
 
 def is_instance_or_subclass(val, class_):

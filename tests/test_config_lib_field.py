@@ -6,6 +6,7 @@ Test field related options
 
 import pytest
 from pytest import raises
+
 from configirl import ConfigClass, Constant, Derivable
 from configirl import ValueNotSetError, DontDumpError, DerivableSetValueError
 
@@ -24,6 +25,17 @@ class Config(ConfigClass):
     def check_PROJECT_NAME_SLUG(self, value):
         if "_" in value:
             raise ValueError("you can't use `_` in slugifie name!")
+
+    PROJECT_NAME_SUPER_SLUG_CACHE_HIT = Constant(default=0)
+
+    PROJECT_NAME_SUPER_SLUG = Derivable(cache=True)
+
+    @PROJECT_NAME_SUPER_SLUG.getter
+    def get_PROJECT_NAME_SUPER_SLUG(self, sep):
+        self.PROJECT_NAME_SUPER_SLUG_CACHE_HIT.set_value(
+            self.PROJECT_NAME_SUPER_SLUG_CACHE_HIT.get_value() + 1
+        )
+        return self.PROJECT_NAME.get_value().replace("_", sep)
 
     ENVIRONMENT_NAME = Derivable()
 
@@ -51,11 +63,13 @@ def test_value_not_set_error():
     with raises(ValueNotSetError):
         conf.PROJECT_NAME_SLUG.get_value()
 
+    # when trying to get a derivable value but the dependent constant value
+    # has not been set yet
     try:
         conf.PROJECT_NAME_SLUG.get_value()
     except Exception as e:
-        assert "PROJECT_NAME" in str(e)
-        assert "PROJECT_NAME_SLUG" in str(e)
+        assert "Config.PROJECT_NAME" in str(e)
+        assert "Config.PROJECT_NAME_SLUG" in str(e)
 
     with raises(ValueNotSetError):
         conf.PROJECT_NAME_SLUG.get_value()
@@ -102,6 +116,15 @@ def test_get_value_for_lbd():
     conf = Config(PROJECT_NAME="configirl")
     PREFIX = "CONFIGIRL_"
     assert conf.PROJECT_NAME.get_value_for_lbd(PREFIX) == "configirl"
+
+
+def test_get_value_with_cache():
+    config = Config(PROJECT_NAME="my_project")
+    assert config.PROJECT_NAME_SUPER_SLUG.get_value(sep="--") == "my--project"
+    assert config.PROJECT_NAME_SUPER_SLUG_CACHE_HIT.get_value() == 1
+
+    assert config.PROJECT_NAME_SUPER_SLUG.get_value(sep="--") == "my--project"
+    assert config.PROJECT_NAME_SUPER_SLUG_CACHE_HIT.get_value() == 1
 
 
 if __name__ == "__main__":

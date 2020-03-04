@@ -2,9 +2,10 @@
 
 import pytest
 from pytest import raises
+
 from configirl import (
     ConfigClass, Constant, Derivable,
-    ValueNotSetError, DerivableSetValueError,
+    DerivableSetValueError,
 )
 
 
@@ -24,6 +25,7 @@ def test_deep_copy_field_instance_when_init_class_object():
     Because Field defines in Class level and the Field is a mutable object,
     we have to do deep copy when you initiate the config object.
     """
+
     class Config(ConfigClass):
         PROJECT_NAME = Constant(default="my_project")
 
@@ -64,8 +66,9 @@ def test_derivable_field_get_value_with_no_default():
     with raises(DerivableSetValueError):
         config.PROJECT_NAME_SLUG.set_value("my-project")
 
-    with raises(ValueNotSetError):
+    with raises(NotImplementedError) as e:
         config.PROJECT_NAME_SLUG.get_value()
+    assert "@PROJECT_NAME_SLUG.getter" in str(e)
 
 
 if __name__ == "__main__":
