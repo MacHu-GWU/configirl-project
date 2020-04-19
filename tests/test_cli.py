@@ -26,14 +26,15 @@ def test_get_config_value():
 
 
 def test_import_config_value():
+    sys_path = os.path.dirname(os.path.dirname(__file__)) # configirl-project
     assert import_config_value(
-        sys_path="/Users/sanhehu/Documents/GitHub/configirl-project",
+        sys_path=sys_path,
         module="configirl.tests.config.Config",
         field="ENVIRONMENT_NAME",
     ) == "my-devops-dev"
 
     assert import_config_value(
-        sys_path="/Users/sanhehu/Documents/GitHub/configirl-project/configirl/tests",
+        sys_path=os.path.join(sys_path, "configirl", "tests"),
         module="config.Config",
         field="ENVIRONMENT_NAME",
     ) == "my-devops-dev"
