@@ -1075,10 +1075,10 @@ def main():
     """
     args = parser.parse_args()
     if args.sub_command == SubCommands.read_json_value:
-        return read_json_value(path=args.path[0], field=args.field[0])
+        print(read_json_value(path=args.path[0], field=args.field[0]))
     elif args.sub_command == SubCommands.get_config_value:
-        return get_config_value(module=args.module[0], field=args.field[0])
+        print(get_config_value(module=args.module[0], field=args.field[0]))
     elif args.sub_command == SubCommands.import_config_value:
-        return import_config_value(sys_path=args.sys_path[0], module=args.module[0], field=args.field[0])
+        print(import_config_value(sys_path=args.sys_path[0], module=args.module[0], field=args.field[0]))
     else:
         raise NotImplementedError
