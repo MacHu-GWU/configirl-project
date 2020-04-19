@@ -905,9 +905,10 @@ __all__ = ["ConfigClass", "Constant", "Derivable"]
 class SubCommands:
     read_json_value = "read-json-value"
     get_config_value = "get-config-value"
+    import_config_value = "import-config-value"
 
 
-def read_config_value(path, field):
+def read_json_value(path, field):
     """
     Return a value of a field from a Json file, ignoring the comments
     """
@@ -941,12 +942,23 @@ def read_config_value(path, field):
 def get_config_value(module, field):
     """
     Initialize a Config Class defined in a python module, and get the value
-    of a field.
+    of a field. The module has to be able to be import.
     """
     chunks = module.split(".")
     module_object = importlib.import_module(".".join(chunks[:-1]))
     klass = getattr(module_object, chunks[-1])
     return getattr(klass(), field).get_value()
+
+
+def import_config_value(sys_path, module, field):
+    """
+    Initialize a Config Class defined in a python module, and get the value
+    of a field. The module has to be able to be import when arg ``sys_path``
+    been add to sys.path.
+    """
+    if sys_path not in sys.path:
+        sys.path.append(sys_path)
+    return get_config_value(module, field)
 
 
 parser = argparse.ArgumentParser(
@@ -957,10 +969,11 @@ subparser = parser.add_subparsers(
     title="sub commands",
     dest="sub_command",
 )
+
 read_json_value_parser = subparser.add_parser(
     SubCommands.read_json_value,
     description=(
-        "get config value from a json file."
+        "read config value from a json file."
     ),
 )
 read_json_value_parser.add_argument(
@@ -983,8 +996,9 @@ read_json_value_parser.add_argument(
 get_config_value_parser = subparser.add_parser(
     SubCommands.get_config_value,
     description=(
-        "get config value by initializing a config object "
-        "and call ``Config().FIELD_NAME.get_value()`` method."
+        "get config value by importing a Config object from a python module, "
+        "and initializing a config object, "
+        "and then call ``Config().FIELD_NAME.get_value()`` method."
     ),
 )
 get_config_value_parser.add_argument(
@@ -992,7 +1006,10 @@ get_config_value_parser.add_argument(
     type=str,
     metavar="module_name",
     nargs=1,
-    help="The config class module name. For example: my_package_name.my_module_name.ConfigClassName",
+    help=(
+        "The path you want to add to ``sys.path`` that allows python to find your module. "
+        "For example: path-to/configirl-project"
+    ),
     required=True,
 )
 get_config_value_parser.add_argument(
@@ -1000,7 +1017,54 @@ get_config_value_parser.add_argument(
     type=str,
     metavar="field_name",
     nargs=1,
-    help="The value of config field you want to access. For example: ENVIRONMENT_NAME",
+    help=(
+        "The value of config field you want to access. "
+        "For example: ENVIRONMENT_NAME"
+    ),
+    required=True,
+)
+
+
+import_config_value_parser = subparser.add_parser(
+    SubCommands.import_config_value,
+    description=(
+        "import config value by importing a Config object from a python module, "
+        "where locate at custom system path, "
+        "and initializing a config object, "
+        "and then call ``Config().FIELD_NAME.get_value()`` method."
+    ),
+)
+import_config_value_parser.add_argument(
+    "--sys_path",
+    type=str,
+    metavar="sys_path",
+    nargs=1,
+    help=(
+        "The path you want to add to ``sys.path`` that allows python to find your module. "
+        "For example: path-to/configirl-project"
+    ),
+    required=True,
+)
+import_config_value_parser.add_argument(
+    "--module",
+    type=str,
+    metavar="module_name",
+    nargs=1,
+    help=(
+        "The config class module name. "
+        "For example: configirl.tests.config.Config"
+    ),
+    required=True,
+)
+import_config_value_parser.add_argument(
+    "--field",
+    type=str,
+    metavar="field_name",
+    nargs=1,
+    help=(
+        "The value of config field you want to access. "
+        "For example: ENVIRONMENT_NAME"
+    ),
     required=True,
 )
 
@@ -1011,8 +1075,10 @@ def main():
     """
     args = parser.parse_args()
     if args.sub_command == SubCommands.read_json_value:
-        return read_config_value(path=args.path[0], field=args.field[0])
+        return read_json_value(path=args.path[0], field=args.field[0])
     elif args.sub_command == SubCommands.get_config_value:
         return get_config_value(module=args.module[0], field=args.field[0])
+    elif args.sub_command == SubCommands.import_config_value:
+        return import_config_value(sys_path=args.sys_path[0], module=args.module[0], field=args.field[0])
     else:
         raise NotImplementedError
