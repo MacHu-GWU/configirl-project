@@ -38,7 +38,7 @@ This library implemented in pure Python with no dependencies.
 
 from __future__ import print_function
 
-__version__ = "0.0.9"
+__version__ = "0.0.10"
 __short_description__ = "Centralized Config Management Tool."
 __license__ = "MIT"
 __author__ = "Sanhe Hu"
@@ -1024,7 +1024,6 @@ get_config_value_parser.add_argument(
     required=True,
 )
 
-
 import_config_value_parser = subparser.add_parser(
     SubCommands.import_config_value,
     description=(
@@ -1069,7 +1068,7 @@ import_config_value_parser.add_argument(
 )
 
 
-def main():
+def main():  # pragma: no cover
     """
     Command Line Interface entry point.
     """

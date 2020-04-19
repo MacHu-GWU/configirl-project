@@ -4,7 +4,7 @@ Release and Version History
 ==============================================================================
 
 
-0.0.10 (TODO)
+0.0.11 (TODO)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Features and Improvements**
 
@@ -13,6 +13,14 @@ Release and Version History
 **Bugfixes**
 
 **Miscellaneous**
+
+
+0.0.10 (2020-04-19)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**Features and Improvements**
+
+- add configirl cli interface for shell script integration
+- add read-json-value get-config-value import-config-value command
 
 
 0.0.9 (2020-03-04)
