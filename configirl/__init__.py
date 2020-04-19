@@ -57,7 +57,7 @@ import argparse
 import importlib
 
 if sys.version_info.major >= 3 and sys.version_info.minor >= 5:  # pragma: no cover
-    from typing import Dict
+    import typing
 
 
 def strip_comment_line_with_symbol(line, start):
@@ -93,6 +93,8 @@ def strip_comments(string, comment_symbols=frozenset(('#', '//'))):
 
 def read_text(abspath, encoding="utf-8"):
     """
+    Read string from a file.
+
     :type abspath: str
     :type encoding: str
     :rtype: str
@@ -103,10 +105,11 @@ def read_text(abspath, encoding="utf-8"):
 
 def write_text(text, abspath, encoding="utf-8"):
     """
+    Write string to a file.
+
     :type text: str
     :type abspath: str
     :type encoding: str
-    :rtype: None
     """
     with open(abspath, "wb") as f:
         return f.write(text.encode(encoding))
@@ -114,6 +117,8 @@ def write_text(text, abspath, encoding="utf-8"):
 
 def json_loads(text):
     """
+    Load data from json, ignoring comments.
+
     :rtype: dict
     """
     return json.loads(strip_comments(text))
@@ -121,17 +126,31 @@ def json_loads(text):
 
 def json_dumps(data):
     """
+    Dump data to string.
+
     :rtype: str
     """
     return json.dumps(data, indent=4, sort_keys=False, ensure_ascii=False)
 
 
 def json_load(path):  # pragma: no cover
+    """
+    Load data from a json file, ignoring comments.
+
+    :type path: str
+    """
     with open(path, "rb") as f:
         return json_loads(f.read().decode("utf-8"))
 
 
 def json_dump(data, path, overwrite=False):  # pragma: no cover
+    """
+    Dump data to a json file.
+
+    :type data: dict
+    :type path: str
+    :type overwrite: bool
+    """
     if not overwrite:
         if os.path.exists(path):
             raise EnvironmentError("%s already exists!" % path)
@@ -209,6 +228,7 @@ REQUIRED = Sentinel("REQUIRED")
 OPTIONAL = Sentinel("OPTIONAL")
 
 
+# --- Exception Class
 class ValueNotSetError(Exception):
     """
     Raises when trying to get value of a field that have not set value before.
@@ -223,22 +243,27 @@ class DerivableSetValueError(Exception):
     pass
 
 
-#
+# --- Field Class
 class Field(object):
     """
     Base class for config value field.
 
+    :type default: bool
+    :param default: default value for this field.
+
     :type dont_dump: bool
     :param dont_dump: if true, then you can't get the value if ``check_dont_dump = True``
         in :meth:`BaseConfigClass.to_dict` and :meth:`BaseConfigClass.to_json`.
-        this prevent from writing sensitive information to file
+        **this prevent from writing sensitive information to file**.
 
     :type printable: bool
-    :param printable: if False, then it will not be displayed with
+    :param printable: if False, then it will not be displayed with print function.
+        **this prevent from displaying sensitive information to the console**.
 
     :type cache: bool
-    :param cache: only available for :class:`Derivable` if True,
-        then it will cache derived value.
+    :param cache: A flag indicates that whether the cache is enabled.
+        only available for :class:`Derivable` if True,
+        **then it will cache computation expensive derived value**.
     """
     _creation_index = 0
 
@@ -247,28 +272,36 @@ class Field(object):
                  dont_dump=False,
                  printable=True,
                  cache=False):
-        self.name = None
-        self._value = default
+        # name will be update in ConfigMeta meta class.
+        self.name = NOTHING
+        if callable(default):
+            self._value = default()
+        else:
+            self._value = default
         self.dont_dump = dont_dump  # type: bool
         self.printable = printable  # type: bool
         self.cache = cache  # type: bool
 
+        # _config_object stores the Config object associated with this field
         self._config_object = NOTHING  # type: BaseConfigClass
+        # _creation_index used to sort declared fields
         self._creation_index = Field._creation_index  # type: int
         Field._creation_index += 1
-
+        # decorator
         self._getter_method = NOTHING  # type: callable
 
     def __repr__(self):
         return "{}(name={!r}, value={!r})".format(self.__class__.__name__, self.name, self._value)
 
     def set_value(self, value):
-        raise DerivableSetValueError(
-            "Derivable.set_value() method should never bee called")
+        """
+        An abstract method that set value to this field.
+        """
+        raise NotImplementedError
 
     def _get_value(self, **kwargs):
         """
-        Config Value Type specified.
+        An abstract method that defines get-value logic flow.
         """
         raise NotImplementedError
 
@@ -277,10 +310,12 @@ class Field(object):
                   check_printable=False,
                   **kwargs):
         """
-        Since the derivable
+        Returns the value for this field.
 
-        :param config_instance:
+        :type check_dont_dump: bool
         :param check_dont_dump:
+
+        :type check_printable: bool
         :param check_printable:
         :return:
 
@@ -335,7 +370,7 @@ class Field(object):
 
     def validator(self, method):
         """
-        a decorator to bind validate method.
+        A decorator to bind validate method.
 
         :type method: callable
         :param method: a callable function like ``method(self, value)``
@@ -364,9 +399,18 @@ class Constant(Field):
     """
 
     def set_value(self, value):
+        """
+        Set value to this Constant field.
+        """
         self._value = value
 
     def _get_value(self, **kwargs):
+        """
+        Constant field get-value logic flow.
+
+        If ``self._value`` is ``NOTHING``, it meas the .set_value(...) method
+        never be called. Otherwise, return the ``self._value``
+        """
         if self._value is NOTHING:
             raise ValueNotSetError(
                 "{}.{} has not set a value yet!".format(
@@ -381,10 +425,34 @@ class Derivable(Field):
     Derivable Value Field.
     """
 
+    def set_value(self, value):
+        """
+        Derivable field doesn't allow to set value manually!
+        """
+        raise DerivableSetValueError(
+            "{} is a Derivable field, you cannot set value to it".format(
+                self.name
+            ))
+
     def getter(self, method):
+        """
+        A decorator to bind getter method.
+        """
         self._getter_method = method
 
     def _get_value(self, **kwargs):
+        """
+        Derivable field get-value logic flow.
+
+        If ``self._getter_method`` is ``NOTHING``, it means the getter method
+        is not implemented yet.
+
+        If cache is enabled, try to retrieve value from existing value stored in
+        ``self._value``. If not available, call the getter method to retrieve
+        the value.
+
+        If cache is disabled, call the getter method.
+        """
         if self._getter_method is NOTHING:
             raise NotImplementedError(
                 "{}.{} getter method is not implemented, "
@@ -419,6 +487,7 @@ def is_instance_or_subclass(val, class_):
 
 def _get_fields(attrs, field_class, pop=False, ordered=False):
     """Get fields from a class. If ordered=True, fields will sorted by creation index.
+
     :param attrs: Mapping of class attributes
     :param type field_class: Base field class
     :param bool pop: Remove matching fields
@@ -437,9 +506,11 @@ def _get_fields(attrs, field_class, pop=False, ordered=False):
 
 
 def _get_fields_by_mro(klass, field_class, ordered=False):
-    """Collect fields from a class, following its method resolution order. The
+    """
+    Collect fields from a class, following its method resolution order. The
     class itself is excluded from the search; only its parents are checked. Get
     fields from ``_declared_fields`` if available, else use ``__dict__``.
+
     :param type klass: Class whose fields to retrieve
     :param type field_class: Base field class
     """
@@ -473,6 +544,10 @@ def _validate_field_name(field_name):
 
 
 class ConfigMeta(type):
+    """
+    Config class meta class. Collect declared :class:`Field`, assign field name.
+    """
+
     def __new__(cls, name, bases, attrs):
         cls_fields = _get_fields(attrs, Field, pop=False, ordered=True)
         klass = super(ConfigMeta, cls).__new__(cls, name, bases, attrs)
@@ -498,14 +573,15 @@ class ConfigMeta(type):
 
 class BaseConfigClass(object):
     """
+    Config class base class.
 
     - :attr:`BaseConfigClass._declared_fields`:
     - :attr:`BaseConfigClass._constant_fields`:
     - :attr:`BaseConfigClass._deriable_fields`:
     """
-    _declared_fields = OrderedDict()  # type: Dict[str: Field]
-    _constant_fields = OrderedDict()  # type: Dict[str: Constant]
-    _deriable_fields = OrderedDict()  # type: Dict[str: Derivable]
+    _declared_fields = OrderedDict()  # type: typing.Dict[str: Field]
+    _constant_fields = OrderedDict()  # type: typing.Dict[str: Constant]
+    _deriable_fields = OrderedDict()  # type: typing.Dict[str: Derivable]
 
     # --- constructor method
     def __init__(self, **kwargs):
@@ -513,6 +589,7 @@ class BaseConfigClass(object):
         for name, field in self._declared_fields.items():
             if name in kwargs:
                 field.set_value(kwargs[name])
+
             field._config_object = self
 
     def __pre_init_hook(self):
@@ -540,46 +617,86 @@ class BaseConfigClass(object):
     @classmethod
     def from_dict(cls, dct):
         """
-        Only read constant config variables from json file.
+        A factory classmethod construct config object from dict.
+        Only loads constant field. If a key is an undefined field,
+        it automatically been ignored.
 
         :type dct: dict
         :rtype: BaseConfigClass
         """
-        config = cls()
+        cfg = cls()
         for key, value in dct.items():
-            if key in config._constant_fields:
-                config._constant_fields[key].set_value(value)
-        return config
+            if key in cfg._constant_fields:
+                cfg._constant_fields[key].set_value(value)
+        return cfg
 
     @classmethod
-    def from_json(cls, json_str):
+    def from_json_str(cls, json_str):
         """
-        :type json_str: str
+        A factory classmethod construct config object from json string.
+        json string can includes comments.
+        Only loads constant field. If a key is an undefined field,
+        it automatically been ignored.
 
+        :type json_str: str
         :rtype: BaseConfigClass
         """
-        return cls.from_dict(json.loads(strip_comments(json_str)))
+        return cls.from_dict(json_loads(json_str))
+
+    @classmethod
+    def from_json_file(cls, json_file):  # pragma: no cover
+        """
+        A factory classmethod construct config object from a json file.
+        json string can includes comments.
+        Only loads constant field. If a key is an undefined field,
+        it automatically been ignored.
+
+        :type json_file: str
+        :rtype: BaseConfigClass
+        """
+        return cls.from_dict(json_load(json_file))
+
+    @classmethod
+    def from_env_var(cls, prefix):  # pragma: no cover
+        """
+        A factory classmethod construct config object from environment variables.
+        Only loads constant field. If a key is an undefined field,
+        it automatically been ignored.
+
+        :type json_file: str
+        :rtype: BaseConfigClass
+        """
+        cfg = cls()
+        cfg.update_from_env_var(prefix=prefix)
+        return cfg
+
 
     def update(self, dct):
         """
-        Update constance config values from dictionary.
+        Update constant config values from a dictionary.
         Only those fields defines as Constant value will be loaded.
-        Fields don't belong to this config definition will not be loaded.
+        If a key is an undefined field, it automatically been ignored.
 
         :type dct: dict
-
-        :rtype: None
+        :rtype: dict
+        :return: loaded data
         """
+        loaded_data = dict()
         for key, value in dct.items():
             if key in self._constant_fields:
                 self._constant_fields[key].set_value(value)
+                loaded_data[key] = value
+        return loaded_data
 
     def update_from_raw_json_file(self):
         """
         Update constant config values from the :attr:`BaseConfigClass.CONFIG_RAW_JSON_FILE`.
+
+        :rtype: dict
+        :return: loaded data
         """
-        dct = json.loads(strip_comments(read_text(self.CONFIG_RAW_JSON_FILE)))
-        self.update(dct)
+        dct = json_load(self.CONFIG_RAW_JSON_FILE)
+        return self.update(dct)
 
     def update_from_env_var(self, prefix):
         """
@@ -587,6 +704,9 @@ class BaseConfigClass(object):
 
         :type prefix: str
         :param prefix: a prefix used in all related environment variable.
+
+        :rtype: dict
+        :return: loaded data
         """
         dct = {
             key.replace(prefix, "", 1): value
@@ -594,6 +714,7 @@ class BaseConfigClass(object):
             if key.replace(prefix, "", 1)
         }
         self.update(dct)
+        return dct
 
     def to_dict(self,
                 check_dont_dump=True,
@@ -691,6 +812,11 @@ class BaseConfigClass(object):
     # --- Runtime Detection ---
     @classmethod
     def is_aws_ec2_amz_linux_runtime(cls):  # pragma: no cover
+        """
+        Check whether it is Amazon Linux EC2 runtime.
+
+        :rtype: bool
+        """
         if os.environ["HOME"].endswith("ec2-user"):
             return True
         else:
@@ -698,6 +824,11 @@ class BaseConfigClass(object):
 
     @classmethod
     def is_aws_ec2_redhat_runtime(cls):  # pragma: no cover
+        """
+        Check whether it is RedHat AWS EC2 runtime.
+
+        :rtype: bool
+        """
         if os.environ["HOME"].endswith("ec2-user"):
             return True
         else:
@@ -705,6 +836,11 @@ class BaseConfigClass(object):
 
     @classmethod
     def is_aws_ec2_freebsd_runtime(cls):  # pragma: no cover
+        """
+        Check whether it is FreeBSD AWS EC2 runtime.
+
+        :rtype: bool
+        """
         if os.environ["HOME"].endswith("ec2-user"):
             return True
         else:
@@ -713,7 +849,11 @@ class BaseConfigClass(object):
     @classmethod
     def is_aws_lambda_runtime(cls):  # pragma: no cover
         """
+        Check whether it is Amazon Lambda Function runtime.
+
         Ref: https://docs.aws.amazon.com/lambda/latest/dg/lambda-environment-variables.html
+
+        :rtype: bool
         """
         if "AWS_LAMBDA_FUNCTION_NAME" in os.environ:
             return True
@@ -723,7 +863,11 @@ class BaseConfigClass(object):
     @classmethod
     def is_aws_code_build_runtime(cls):  # pragma: no cover
         """
+        Check whether it is AWS Code Build runtime.
+
         Ref: https://docs.aws.amazon.com/codebuild/latest/userguide/build-env-ref-env-vars.html
+
+        :rtype: bool
         """
         if "CODEBUILD_BUILD_ID" in os.environ:
             return True
@@ -733,6 +877,11 @@ class BaseConfigClass(object):
     # CI
     @classmethod
     def is_ci_runtime(cls):  # pragma: no cover
+        """
+        Check whether it is CI runtime.
+
+        :rtype: bool
+        """
         if "CI" in os.environ:
             if os.environ["CI"]:
                 return True
@@ -744,8 +893,11 @@ class BaseConfigClass(object):
     @classmethod
     def is_circle_ci_runtime(cls):  # pragma: no cover
         """
+        Check whether it is CircleCI runtime.
+
         Ref: https://circleci.com/docs/2.0/env-vars/#built-in-environment-variables
-        :return:
+
+        :rtype: bool
         """
         if "CIRCLECI" in os.environ:
             if os.environ["CIRCLECI"]:
@@ -758,7 +910,11 @@ class BaseConfigClass(object):
     @classmethod
     def is_travis_ci_runtime(cls):  # pragma: no cover
         """
+        Check whether it is TravisCI runtime.
+
         Ref: https://docs.travis-ci.com/user/environment-variables/#default-environment-variables
+
+        :rtype: bool
         """
         if "TRAVIS" in os.environ:
             if os.environ["TRAVIS"]:
@@ -771,7 +927,11 @@ class BaseConfigClass(object):
     @classmethod
     def is_gitlab_ci_runtime(cls):  # pragma: no cover
         """
+        Check whether it is GitlabCI runtime.
+
         Ref: https://docs.gitlab.com/ee/ci/variables/
+
+        :rtype: bool
         """
         if "GITLAB_CI" in os.environ:
             if os.environ["GITLAB_CI"]:
@@ -895,9 +1055,6 @@ class BaseConfigClass(object):
 @add_metaclass(ConfigMeta)
 class ConfigClass(BaseConfigClass):
     pass
-
-
-__all__ = ["ConfigClass", "Constant", "Derivable"]
 
 
 # --- Command Line Interface ---
