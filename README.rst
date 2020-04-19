@@ -51,6 +51,11 @@
 Welcome to ``configirl`` Documentation
 ==============================================================================
 
+**If you are looking for technical support**, click the badge below to join this gitter chat room and ask question to the author.
+
+.. image:: https://img.shields.io/badge/Chat-Tech_Support-_.svg
+      :target: https://gitter.im/MacHu-GWU-Python-Library-Technical-Support/community
+
 .. contents::
     :depth: 1
     :local:
@@ -353,6 +358,83 @@ You can create a ``config_init.py`` scripts that tells computer to load config v
     if conf.is_ci_runtime(): # allow other system like terraform to use those value for deployment
         conf.dump_shell_script_json_config_file()
         conf.dump_terraform_json_config_file()
+
+
+Use Case - Integrate with Shell Script
+------------------------------------------------------------------------------
+
+Lets say you have a shell scripts that doing some aws cli commands.
+
+- On your local computer, you use a IAM User AWS_PROFILE. so in all of your aws command line, you need to pass ``--profile my_aws_profile`` arg.
+- But on your CI/CD runtime (let's say circleci), you use credential from environment variable. So you don't need to pass ``--profile`` arg.
+- On your production server, you use AWS EC2 IAM Role. So you don't need to pass ``--profile`` arg.
+
+And you just want to write one script and works everywhere, so you don't need to maintain a lots of code that constructing the right commands, and don't need to remember which shell scripts are supposed to run in which environmentt.
+
+**Here's the solution with configirl**:
+
+First, you can create a json config file to store non sensitive data for your local development. Please be aware of the path.
+
+.. code-block:: javascript
+
+    // content of $HOME/my-project/config/config.json
+    {
+        "AWS_PROFILE": "my_aws_profile"
+    }
+
+Then, you use ``configirl`` to declare a python file for dynamic config values.
+
+.. code-block:: python
+
+    # content of $HOME/my-project/config/config.py
+    import json
+    from configirl import ConfigClass, Constant, Derivable
+
+    class Config(ConfigClass):
+        AWS_PROFILE = Derivable()
+
+        @AWS_PROFILE.getter
+        def get_AWS_PROFILE():
+            # custom runtime detection function
+            if self.is_aws_ec2_amz_linux_runtime():
+                return None
+            # custom runtime detection function
+            elif self.is_circle_ci_runtime():
+                return None
+            else: # local runtime
+                with open("/path-to-config-dir/config.json", "r") as f:
+                    return json.loads(f.read())["AWS_PROFILE"]
+
+        AWS_CLI_PROFILE_ARG = Derivable()
+
+        @AWS_CLI_PROFILE_ARG.getter
+        def get_AWS_CLI_PROFILE_ARG(self):
+            if self.is_aws_ec2_amz_linux_runtime():
+                return ""
+            elif self.is_circle_ci_runtime():
+                return ""
+            else: # local runtime
+                return "--profile {}".format(self.AWS_PROFILE.get_value())
+
+At the end, you use configirl cli to retrive dynamic config value ``AWS_CLI_PROFILE_ARG``. On local, it is ``--profile my_aws_profile``. On other runtime, it is empty string. As a result, your shell scripts works everywhere and behave differently in different environment.
+
+.. code-block:: bash
+
+    #/bin/bash
+
+    aws_cli_profile_arg="$(configirl import-config-value --sys_path ${HOME}/my-project/config --module config.Config --field AWS_CLI_PROFILE_ARG)"
+
+    aws s3 cp ... ${aws_cli_profile_arg}
+
+
+Use Case - Integrate with other DevOps tool, for example Terraform
+------------------------------------------------------------------------------
+
+There are a lots of DevOps tool, but defining complex dynamic logic in those tool may not be as easy as in Python. Let's use terraform as an example here.
+
+You want a terraform scripts works everywhere and behave differently in different environment.
+
+TODO ...
 
 
 Other Godies
