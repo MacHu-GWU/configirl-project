@@ -1,5 +1,6 @@
+// Some Comments
 {
-    "PROJECT_NAME": "config_lib",
+    "PROJECT_NAME": "config_lib", // Some Comments
     "STAGE": "dev",
     "GITHUB_USERNAME": "admin@gmail.com",
     "GITHUB_PASSWORD": "DDDcR6hz#LYhopNM%JyJRhm89ApvFzVa",

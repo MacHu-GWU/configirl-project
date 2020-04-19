@@ -56,7 +56,6 @@ from collections import OrderedDict
 import argparse
 import importlib
 
-
 if sys.version_info.major >= 3 and sys.version_info.minor >= 5:  # pragma: no cover
     from typing import Dict
 
@@ -460,6 +459,7 @@ def _get_fields_by_mro(klass, field_class, ordered=False):
 
 
 VALID_CHAR_SET = set(string.ascii_uppercase + string.digits + "_")
+
 
 def _validate_field_name(field_name):
     """
@@ -898,3 +898,121 @@ class ConfigClass(BaseConfigClass):
 
 
 __all__ = ["ConfigClass", "Constant", "Derivable"]
+
+
+# --- Command Line Interface ---
+
+class SubCommands:
+    read_json_value = "read-json-value"
+    get_config_value = "get-config-value"
+
+
+def read_config_value(path, field):
+    """
+    Return a value of a field from a Json file, ignoring the comments
+    """
+    # find absolute path
+    cwd = os.getcwd()
+
+    if not os.path.isabs(path):
+        file_path = os.path.abspath(os.path.join(cwd, path))
+    else:
+        file_path = path
+
+    # fix json_path
+    json_path = field
+    if json_path.startswith("$."):
+        json_path = json_path.replace("$.", "", 1)
+
+    # read data
+    with open(file_path, "rb") as f:
+        data = json.loads(strip_comments(f.read().decode("utf-8")))
+
+    # access value
+    value = data
+    for part in json_path.split("."):
+        if part in value:
+            value = value[part]
+        else:
+            raise ValueError("'$.{}' not found in {}".format(json_path, file_path))
+    return value
+
+
+def get_config_value(module, field):
+    """
+    Initialize a Config Class defined in a python module, and get the value
+    of a field.
+    """
+    chunks = module.split(".")
+    module_object = importlib.import_module(".".join(chunks[:-1]))
+    klass = getattr(module_object, chunks[-1])
+    return getattr(klass(), field).get_value()
+
+
+parser = argparse.ArgumentParser(
+    prog="configirl",
+)
+
+subparser = parser.add_subparsers(
+    title="sub commands",
+    dest="sub_command",
+)
+read_json_value_parser = subparser.add_parser(
+    SubCommands.read_json_value,
+    description=(
+        "get config value from a json file."
+    ),
+)
+read_json_value_parser.add_argument(
+    "--path",
+    type=str,
+    metavar="path",
+    nargs=1,
+    help="The json file path",
+    required=True,
+)
+read_json_value_parser.add_argument(
+    "--field",
+    type=str,
+    metavar="field_name",
+    nargs=1,
+    help="The value of json field you want to access. For example: STAGE",
+    required=True,
+)
+
+get_config_value_parser = subparser.add_parser(
+    SubCommands.get_config_value,
+    description=(
+        "get config value by initializing a config object "
+        "and call ``Config().FIELD_NAME.get_value()`` method."
+    ),
+)
+get_config_value_parser.add_argument(
+    "--module",
+    type=str,
+    metavar="module_name",
+    nargs=1,
+    help="The config class module name. For example: my_package_name.my_module_name.ConfigClassName",
+    required=True,
+)
+get_config_value_parser.add_argument(
+    "--field",
+    type=str,
+    metavar="field_name",
+    nargs=1,
+    help="The value of config field you want to access. For example: ENVIRONMENT_NAME",
+    required=True,
+)
+
+
+def main():
+    """
+    Command Line Interface entry point.
+    """
+    args = parser.parse_args()
+    if args.sub_command == SubCommands.read_json_value:
+        return read_config_value(path=args.path[0], field=args.field[0])
+    elif args.sub_command == SubCommands.get_config_value:
+        return get_config_value(module=args.module[0], field=args.field[0])
+    else:
+        raise NotImplementedError

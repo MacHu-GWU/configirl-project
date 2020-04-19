@@ -9,7 +9,7 @@ class Config(ConfigClass):
 
     @PROJECT_NAME_SLUG.getter
     def get_PROJECT_NAME_SLUG(self):
-        return self.PROJECT_NAME_SLUG.get_value().replace("_", "-")
+        return self.PROJECT_NAME.get_value().replace("_", "-")
 
     STAGE = Constant(default="dev")
 
