@@ -13,7 +13,6 @@ install:
 
 script:
   - pytest tests --cov=configirl # Run unittest
-  - bash tests/tetst-cli.sh
 
 notifications:
   email: false # Mute email notification
