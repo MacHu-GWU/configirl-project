@@ -50,6 +50,7 @@ import re
 import sys
 import json
 import copy
+import string
 import inspect
 from collections import OrderedDict
 import argparse
@@ -458,6 +459,19 @@ def _get_fields_by_mro(klass, field_class, ordered=False):
     )
 
 
+VALID_CHAR_SET = set(string.ascii_uppercase + string.digits + "_")
+
+def _validate_field_name(field_name):
+    """
+    Validate config field name naming convention. Only [A-Z0-9_] is allowed.
+    lowercase is not allowed.
+    """
+    if len(set(field_name).difference(VALID_CHAR_SET)):
+        msg = "'{}' is not a valid field name, only [A-Z0-9_] is allowed!" \
+            .format(field_name)
+        raise ValueError(msg)
+
+
 class ConfigMeta(type):
     def __new__(cls, name, bases, attrs):
         cls_fields = _get_fields(attrs, Field, pop=False, ordered=True)
@@ -477,6 +491,7 @@ class ConfigMeta(type):
             if isinstance(field, Derivable)
         ])
         for name, field in klass._declared_fields.items():
+            _validate_field_name(name)
             field.name = name
         return klass
 

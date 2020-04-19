@@ -9,6 +9,12 @@ from configirl import (
 )
 
 
+def test_wrong_field_naming_convention():
+    with raises(ValueError):
+        class Config(ConfigClass):
+            my_field = Constant()
+
+
 def test_get_value_method_been_called_without_class_object():
     class Config(ConfigClass):
         PROJECT_NAME = Constant()
