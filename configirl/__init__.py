@@ -248,7 +248,7 @@ class Field(object):
     """
     Base class for config value field.
 
-    :type default: bool
+    :type default: typing.Any
     :param default: default value for this field.
 
     :type dont_dump: bool
