@@ -1104,7 +1104,14 @@ def get_config_value(module, field):
     chunks = module.split(".")
     module_object = importlib.import_module(".".join(chunks[:-1]))
     klass = getattr(module_object, chunks[-1])
-    return getattr(klass(), field).get_value()
+    cfg_obj = klass()
+    attribute = getattr(cfg_obj, field)
+    if isinstance(attribute, Field):
+        return attribute.get_value()
+    elif callable(attribute):
+        return attribute()
+    else:
+        return attribute
 
 
 def import_config_value(sys_path, module, field):

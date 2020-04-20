@@ -18,3 +18,6 @@ class Config(ConfigClass):
     @ENVIRONMENT_NAME.getter
     def get_ENVIRONMENT_NAME(self):
         return "{}-{}".format(self.PROJECT_NAME_SLUG.get_value(), self.STAGE.get_value())
+
+    def is_prod_runtime(self):
+        return False
