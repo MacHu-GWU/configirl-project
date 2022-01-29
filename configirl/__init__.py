@@ -823,7 +823,7 @@ class BaseConfigClass(object):
 
         :rtype: bool
         """
-        if os.environ["HOME"].endswith("ec2-user"):
+        if os.environ.get("HOME", "").endswith("ec2-user"):
             return True
         else:
             return False
@@ -835,7 +835,7 @@ class BaseConfigClass(object):
 
         :rtype: bool
         """
-        if os.environ["HOME"].endswith("ec2-user"):
+        if os.environ.get("HOME", "").endswith("ec2-user"):
             return True
         else:
             return False
@@ -847,7 +847,7 @@ class BaseConfigClass(object):
 
         :rtype: bool
         """
-        if os.environ["HOME"].endswith("ec2-user"):
+        if os.environ.get("HOME", "").endswith("ec2-user"):
             return True
         else:
             return False
