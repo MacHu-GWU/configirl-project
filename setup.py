@@ -163,32 +163,32 @@ if __name__ == "__main__":
     except:
         print("'requirements-test.txt' not found!")
 
-    # setup(
-    #     name=PKG_NAME,
-    #     description=SHORT_DESCRIPTION,
-    #     long_description=LONG_DESCRIPTION,
-    #     version=VERSION,
-    #     author=AUTHOR,
-    #     author_email=AUTHOR_EMAIL,
-    #     maintainer=MAINTAINER,
-    #     maintainer_email=MAINTAINER_EMAIL,
-    #     packages=PACKAGES,
-    #     include_package_data=INCLUDE_PACKAGE_DATA,
-    #     package_data=PACKAGE_DATA,
-    #     py_modules=PY_MODULES,
-    #     url=URL,
-    #     download_url=DOWNLOAD_URL,
-    #     classifiers=CLASSIFIERS,
-    #     platforms=PLATFORMS,
-    #     license=LICENSE,
-    #     install_requires=REQUIRES,
-    #     extras_require=EXTRA_REQUIRE,
-    #     entry_points={
-    #         "console_scripts": [
-    #             "configirl=configirl:main",
-    #         ],
-    #     },
-    # )
+    setup(
+        name=PKG_NAME,
+        description=SHORT_DESCRIPTION,
+        long_description=LONG_DESCRIPTION,
+        version=VERSION,
+        author=AUTHOR,
+        author_email=AUTHOR_EMAIL,
+        maintainer=MAINTAINER,
+        maintainer_email=MAINTAINER_EMAIL,
+        packages=PACKAGES,
+        include_package_data=INCLUDE_PACKAGE_DATA,
+        package_data=PACKAGE_DATA,
+        py_modules=PY_MODULES,
+        url=URL,
+        download_url=DOWNLOAD_URL,
+        classifiers=CLASSIFIERS,
+        platforms=PLATFORMS,
+        license=LICENSE,
+        install_requires=REQUIRES,
+        extras_require=EXTRA_REQUIRE,
+        entry_points={
+            "console_scripts": [
+                "configirl=configirl:main",
+            ],
+        },
+    )
 
 """
 Appendix
