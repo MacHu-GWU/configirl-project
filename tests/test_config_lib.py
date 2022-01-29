@@ -108,6 +108,7 @@ class TestConfigClass(object):
         config1.dump_cloudformation_json_config_file()
         config1.dump_sam_json_config_file()
         config1.dump_serverless_json_config_file()
+        config1.dump_aws_chalice_json_config_file()
         config1.dump_terraform_json_config_file()
 
 

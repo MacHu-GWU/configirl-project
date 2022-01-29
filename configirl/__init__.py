@@ -363,7 +363,7 @@ class Field(object):
         """
         Smartly decide where should read config value from.
         """
-        if self._config_object.is_aws_lambda_runtime():
+        if self._config_object.is_aws_lambda_runtime():  # pragma: no cover
             return self.get_value_from_env(prefix=prefix)
         else:
             return self.get_value()
@@ -634,7 +634,7 @@ class BaseConfigClass(object):
         return cfg
 
     @classmethod
-    def from_json_str(cls, json_str):
+    def from_json_str(cls, json_str):  # pragma: no cover
         """
         A factory classmethod construct config object from json string.
         json string can includes comments.
@@ -761,7 +761,7 @@ class BaseConfigClass(object):
                     pass
                 else:
                     raise e
-            except Exception as e:
+            except Exception as e:  # pragma: no cover
                 raise e
         return dct
 
@@ -808,7 +808,7 @@ class BaseConfigClass(object):
             self.to_json(check_dont_dump=False, check_printable=True)
         )
 
-    def pprint(self):
+    def pprint(self):  # pragma: no cover
         print(self.__repr__())
 
     def validate(self):

@@ -20,7 +20,15 @@ def test_read_config_value():
         with pytest.raises(ValueError):
             read_json_value(abspath, "$.PROJECT_NAME.NOT_EXIST_FIELD")
     elif cwd.endswith("configirl-project"):
+        abspath = os.path.join(cwd, "./tests/config-raw.json")
         assert read_json_value("./tests/config-raw.json", "PROJECT_NAME") == "config_lib"
+        assert read_json_value("./tests/config-raw.json", "$.PROJECT_NAME") == "config_lib"
+
+        assert read_json_value(abspath, "PROJECT_NAME") == "config_lib"
+        assert read_json_value(abspath, "$.PROJECT_NAME") == "config_lib"
+
+        with pytest.raises(ValueError):
+            read_json_value(abspath, "$.PROJECT_NAME.NOT_EXIST_FIELD")
     else:
         raise NotImplementedError
 
