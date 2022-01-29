@@ -210,8 +210,9 @@ class Sentinel(object):  # pragma: no cover
         return super(Sentinel, cls).__new__(cls)
 
 
+# singleton for deserialize
 # obj_id is for compat. with prev. versions
-def _sentinel_unpickler(name, obj_id=None):
+def _sentinel_unpickler(name, obj_id=None):  # pragma: no cover
     if name in Sentinel._existing_instances:
         return Sentinel._existing_instances[name]
     return Sentinel(name)
@@ -249,7 +250,7 @@ class Field(object):
     Base class for config value field.
 
     :type default: typing.Any
-    :param default: default value for this field.
+    :param default: default value for this field. can be a callable function.
 
     :type dont_dump: bool
     :param dont_dump: if true, then you can't get the value if ``check_dont_dump = True``
@@ -267,11 +268,13 @@ class Field(object):
     """
     _creation_index = 0
 
-    def __init__(self,
-                 default=NOTHING,
-                 dont_dump=False,
-                 printable=True,
-                 cache=False):
+    def __init__(
+        self,
+        default=NOTHING,
+        dont_dump=False,
+        printable=True,
+        cache=False,
+    ):
         # name will be update in ConfigMeta meta class.
         self.name = NOTHING
         if callable(default):
@@ -473,7 +476,7 @@ class Derivable(Field):
                     self._config_object.__class__.__name__, self.name, e
                 )
             )
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             raise e
 
 

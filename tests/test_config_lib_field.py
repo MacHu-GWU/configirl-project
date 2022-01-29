@@ -7,6 +7,7 @@ Test field related options
 import pytest
 from pytest import raises
 
+from datetime import datetime
 from configirl import ConfigClass, Constant, Derivable
 from configirl import ValueNotSetError, DontDumpError, DerivableSetValueError
 
@@ -48,6 +49,8 @@ class Config(ConfigClass):
 
     GIT_PASSWORD = Constant(printable=False)
 
+    CREATE_TIME = Constant(default=datetime.utcnow)
+
     METADATA = Constant(dont_dump=True)
 
 
@@ -80,6 +83,11 @@ def test_value_not_set_error():
         assert "PROJECT_NAME" in str(e)
         assert "PROJECT_NAME_SLUG" in str(e)
         assert "ENVIRONMENT_NAME" in str(e)
+
+
+def test_default():
+    conf = Config()
+    assert isinstance(conf.CREATE_TIME.get_value(), datetime)
 
 
 def test_dont_dump_error():

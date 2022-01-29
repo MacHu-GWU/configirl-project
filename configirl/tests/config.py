@@ -21,3 +21,5 @@ class Config(ConfigClass):
 
     def is_prod_runtime(self):
         return False
+
+    _version = "0.0.1"
