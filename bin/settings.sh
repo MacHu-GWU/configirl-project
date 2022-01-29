@@ -14,10 +14,10 @@ github_repo_name="configirl-project"
 # Python
 package_name="configirl"
 py_ver_major="3"
-py_ver_minor="6"
-py_ver_micro="2"
+py_ver_minor="8"
+py_ver_micro="11"
 use_pyenv="N" # "Y" or "N"
-supported_py_versions="2.7.13 3.4.6 3.5.3 3.6.2" # e.g: "2.7.13 3.6.2"
+supported_py_versions="2.7.13 3.6.2 3.7.12 3.8.11 3.9.6 3.10.2" # e.g: "2.7.13 3.6.2"
 
 
 #--- Doc Build

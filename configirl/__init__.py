@@ -3,7 +3,7 @@
 """
 The MIT License (MIT)
 
-Copyright 2019 Sanhe Hu <https://github.com/MacHu-GWU/configirl-project>
+Copyright 2022 Sanhe Hu <https://github.com/MacHu-GWU/configirl-project>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -38,7 +38,7 @@ This library implemented in pure Python with no dependencies.
 
 from __future__ import print_function
 
-__version__ = "0.0.10"
+__version__ = "1.0.1"
 __short_description__ = "Centralized Config Management Tool."
 __license__ = "MIT"
 __author__ = "Sanhe Hu"
@@ -560,7 +560,7 @@ class ConfigMeta(type):
             for name, field in klass._declared_fields.items()
             if isinstance(field, Constant)
         ])
-        klass._deriable_fields = OrderedDict([
+        klass._derivable_fields = OrderedDict([
             (name, field)
             for name, field in klass._declared_fields.items()
             if isinstance(field, Derivable)
@@ -670,7 +670,6 @@ class BaseConfigClass(object):
         cfg.update_from_env_var(prefix=prefix)
         return cfg
 
-
     def update(self, dct):
         """
         Update constant config values from a dictionary.
@@ -716,11 +715,13 @@ class BaseConfigClass(object):
         self.update(dct)
         return dct
 
-    def to_dict(self,
-                check_dont_dump=True,
-                check_printable=False,
-                ignore_na=False,
-                prefix=""):
+    def to_dict(
+        self,
+        check_dont_dump=True,
+        check_printable=False,
+        ignore_na=False,
+        prefix="",
+    ):
         """
         Dump config values to dictionary.
 
@@ -761,11 +762,13 @@ class BaseConfigClass(object):
                 raise e
         return dct
 
-    def to_json(self,
-                check_dont_dump=True,
-                check_printable=False,
-                ignore_na=False,
-                prefix=""):
+    def to_json(
+        self,
+        check_dont_dump=True,
+        check_printable=False,
+        ignore_na=False,
+        prefix="",
+    ):
         """
         Dump config values to json.
 
@@ -927,7 +930,7 @@ class BaseConfigClass(object):
     @classmethod
     def is_gitlab_ci_runtime(cls):  # pragma: no cover
         """
-        Check whether it is GitlabCI runtime.
+        Check whether it is Gitlab CI runtime.
 
         Ref: https://docs.gitlab.com/ee/ci/variables/
 
@@ -935,6 +938,23 @@ class BaseConfigClass(object):
         """
         if "GITLAB_CI" in os.environ:
             if os.environ["GITLAB_CI"]:
+                return True
+            else:
+                return False
+        else:
+            return False
+
+    @add_metaclass
+    def is_github_ci_runtime(self):  # pragma: no cover
+        """
+        Check whether it is GitHub Action CI runtime.
+
+        Ref: https://docs.github.com/en/actions/learn-github-actions/environment-variables
+
+        :rtype: bool
+        """
+        if "GITHUB_ACTION" in os.environ:
+            if os.environ["GITHUB_ACTION"]:
                 return True
             else:
                 return False
@@ -978,6 +998,10 @@ class BaseConfigClass(object):
         return self._join_config_dir("config-final-for-serverless.json")
 
     @property
+    def CONFIG_FINAL_JSON_FILE_FOR_AWS_CHALICE(self):
+        return self._join_config_dir("config-final-for-chalice.json")
+
+    @property
     def CONFIG_FINAL_JSON_FILE_FOR_TERRAFORM(self):
         return self._join_config_dir("config-final-for-terraform.json")
 
@@ -1006,47 +1030,62 @@ class BaseConfigClass(object):
     def to_serverless_config_data(self):
         return self.to_dict()
 
+    def to_aws_chalice_config_data(self):
+        return self.to_dict()
+
     def to_terraform_config_data(self):
         return self.to_dict()
 
-    def _dump_for_xxx_config_file(self,
-                                  to_config_data_meth,
-                                  config_json_file_path):
+    def _dump_for_xyz_config_file(
+        self,
+        to_config_data_meth,
+        config_json_file_path,
+    ):
+        """
+        :type to_config_data_meth: callable
+        :type config_json_file_path: str
+        """
         json_str = json_dumps(to_config_data_meth())
         write_text(json_str, config_json_file_path)
 
     def dump_python_json_config_file(self):
-        self._dump_for_xxx_config_file(
+        self._dump_for_xyz_config_file(
             self.to_python_json_config_data,
             self.CONFIG_FINAL_JSON_FILE_FOR_PYTHON,
         )
 
     def dump_shell_script_json_config_file(self):
-        self._dump_for_xxx_config_file(
+        self._dump_for_xyz_config_file(
             self.to_shell_script_config_data,
             self.CONFIG_FINAL_JSON_FILE_FOR_SHELL_SCRIPT,
         )
 
     def dump_cloudformation_json_config_file(self):
-        self._dump_for_xxx_config_file(
+        self._dump_for_xyz_config_file(
             self.to_cloudformation_config_data,
             self.CONFIG_FINAL_JSON_FILE_FOR_CLOUDFORMATION,
         )
 
     def dump_sam_json_config_file(self):
-        self._dump_for_xxx_config_file(
+        self._dump_for_xyz_config_file(
             self.to_sam_config_data,
             self.CONFIG_FINAL_JSON_FILE_FOR_SAM,
         )
 
     def dump_serverless_json_config_file(self):
-        self._dump_for_xxx_config_file(
+        self._dump_for_xyz_config_file(
             self.to_serverless_config_data,
             self.CONFIG_FINAL_JSON_FILE_FOR_SERVERLESS,
         )
 
+    def dump_aws_chalice_json_config_file(self):
+        self._dump_for_xyz_config_file(
+            self.to_aws_chalice_config_data,
+            self.CONFIG_FINAL_JSON_FILE_FOR_AWS_CHALICE,
+        )
+
     def dump_terraform_json_config_file(self):
-        self._dump_for_xxx_config_file(
+        self._dump_for_xyz_config_file(
             self.to_terraform_config_data,
             self.CONFIG_FINAL_JSON_FILE_FOR_TERRAFORM,
         )
@@ -1068,6 +1107,9 @@ class SubCommands:
 def read_json_value(path, field):
     """
     Return a value of a field from a Json file, ignoring the comments
+
+    :type path: str
+    :type field: str
     """
     # find absolute path
     cwd = os.getcwd()
@@ -1100,6 +1142,9 @@ def get_config_value(module, field):
     """
     Initialize a Config Class defined in a python module, and get the value
     of a field. The module has to be able to be import.
+
+    :type path: str
+    :type field: str
     """
     chunks = module.split(".")
     module_object = importlib.import_module(".".join(chunks[:-1]))
@@ -1119,6 +1164,10 @@ def import_config_value(sys_path, module, field):
     Initialize a Config Class defined in a python module, and get the value
     of a field. The module has to be able to be import when arg ``sys_path``
     been add to sys.path.
+
+    :type sys_path: str
+    :type module: str
+    :type field: str
     """
     if sys_path not in sys.path:
         sys.path.append(sys_path)
@@ -1165,6 +1214,7 @@ get_config_value_parser = subparser.add_parser(
         "and then call ``Config().FIELD_NAME.get_value()`` method."
     ),
 )
+
 get_config_value_parser.add_argument(
     "--module",
     type=str,
@@ -1176,6 +1226,7 @@ get_config_value_parser.add_argument(
     ),
     required=True,
 )
+
 get_config_value_parser.add_argument(
     "--field",
     type=str,
@@ -1197,6 +1248,7 @@ import_config_value_parser = subparser.add_parser(
         "and then call ``Config().FIELD_NAME.get_value()`` method."
     ),
 )
+
 import_config_value_parser.add_argument(
     "--sys_path",
     type=str,
@@ -1208,6 +1260,7 @@ import_config_value_parser.add_argument(
     ),
     required=True,
 )
+
 import_config_value_parser.add_argument(
     "--module",
     type=str,
@@ -1219,6 +1272,7 @@ import_config_value_parser.add_argument(
     ),
     required=True,
 )
+
 import_config_value_parser.add_argument(
     "--field",
     type=str,

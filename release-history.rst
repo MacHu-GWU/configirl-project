@@ -4,7 +4,7 @@ Release and Version History
 ==============================================================================
 
 
-0.0.11 (TODO)
+1.0.2 (TODO)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Features and Improvements**
 
@@ -13,6 +13,14 @@ Release and Version History
 **Bugfixes**
 
 **Miscellaneous**
+
+
+1.0.1 (TODO)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**Minor Improvements**
+
+- add type hint
+- add aws chalice dumper
 
 
 0.0.10 (2020-04-19)
